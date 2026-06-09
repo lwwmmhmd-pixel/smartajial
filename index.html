@@ -1,245 +1,88 @@
-<!DOCTYPE html>
-<html lang="ar" dir="rtl">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>نظام أجيال المستقل الذكي - لرفع ورصد العلامات</title>
-    
-    <!-- مكتبة قراءة ملفات الإكسل المعتمدة -->
-    <script src="https://jsdelivr.net"></script>
-    
-    <style>
-        :root {
-            --primary-color: #2c3e50;
-            --accent-color: #27ae60;
-            --bg-color: #f8f9fa;
-            --card-bg: #ffffff;
-        }
+// ==UserScript==
+// @name         AJYAL ENTERPRISE SYSTEM - MASTER ULTIMATE V6.5.2يعمل
+// @namespace    http://tampermonkey.net/
+// @version      6.5.2
+// @description  نظام أجيال الذكي - إصلاح زر تغيير الخيار ونسب المطابقة اليدوية وتلوين العناوين باللون الأسود
+// @author       You
+// @match        https://ajyal.moe.gov.jo/*
+// @grant        none
+// @require      https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js
+// ==/UserScript==
 
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: var(--bg-color);
-            color: #333;
-            margin: 0;
-            padding: 20px;
-        }
-
-        .container {
-            max-width: 1100px;
-            margin: 0 auto;
-        }
-
-        .header {
-            background: linear-gradient(135deg, var(--primary-color), #34495e);
-            color: white;
-            padding: 20px;
-            border-radius: 10px;
-            margin-bottom: 20px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-        }
-
-        .grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
-        }
-
-        @media (max-width: 768px) {
-            .grid { grid-template-columns: 1fr; }
-        }
-
-        .card {
-            background: var(--card-bg);
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-            border: 1px solid #e0e0e0;
-        }
-
-        h2 {
-            margin-top: 0;
-            color: var(--primary-color);
-            border-bottom: 2px solid #eaeaea;
-            padding-bottom: 8px;
-        }
-
-        .file-upload {
-            border: 2px dashed #3498db;
-            padding: 20px;
-            text-align: center;
-            border-radius: 8px;
-            background: #ecf0f1;
-            cursor: pointer;
-        }
-
-        .btn {
-            background-color: var(--accent-color);
-            color: white;
-            border: none;
-            padding: 10px 15px;
-            font-size: 14px;
-            border-radius: 5px;
-            cursor: pointer;
-            font-weight: bold;
-            transition: background 0.2s;
-        }
-
-        .btn:hover { background-color: #219653; }
-        .btn-blue { background-color: #3498db; }
-        .btn-blue:hover { background-color: #2980b9; }
-
-        .log-box {
-            background: #1e1e1e;
-            color: #00ff00;
-            font-family: monospace;
-            padding: 15px;
-            border-radius: 5px;
-            height: 120px;
-            overflow-y: auto;
-            font-size: 13px;
-            margin-top: 15px;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 15px;
-            font-size: 14px;
-        }
-
-        th, td {
-            border: 1px solid #ddd;
-            padding: 10px;
-            text-align: center;
-        }
-
-        th {
-            background-color: var(--primary-color);
-            color: white;
-        }
-
-        tr:nth-child(even) { background-color: #f2f2f2; }
-
-        .mark-input {
-            width: 50px;
-            text-align: center;
-            padding: 4px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-        }
-    </style>
-</head>
-<body>
-
-<div class="container">
-    <div class="header">
-        <h1>🎯 نظام أجيال المستقل لإدارة ورصد العلامات ذكياً</h1>
-        <p>قم برفع ملف الإكسل، وسيقوم النظام بمطابقة الأسماء ورصد العلامات تلقائياً في الجدول بالأسفل دون الحاجة لمواقع خارجية.</p>
-    </div>
-
-    <div class="grid">
-        <!-- لوحة التحكم ورفع الملفات -->
-        <div class="card">
-            <h2>1. إدخال البيانات والتحكم</h2>
-            <div class="file-upload" onclick="document.getElementById('excel-file').click()">
-                <p>اضغط هنا لرفع كشف علامات الإكسل (xlsx / xls)</p>
-                <input type="file" id="excel-file" accept=".xlsx, .xls" style="display:none;" onchange="handleExcelUpload(event)">
-            </div>
-            
-            <div style="margin-top: 15px; display: flex; gap: 10px;">
-                <button class="btn" onclick="startSmartAutofill()">⚡ تشغيل الرصد الذكي</button>
-                <button class="btn btn-blue" onclick="clearAllSessionMatches()">🗑️ تنظيف التعديلات المؤقتة</button>
-            </div>
-
-            <div class="log-box" id="log-output">📟 نظام التشغيل جاهز ومستقر بانتظار الملفات...</div>
-        </div>
-
-        <!-- معاينة ملف الإكسل المرفوع -->
-        <div class="card">
-            <h2>2. كشف الإكسل المستورد</h2>
-            <div style="max-height: 250px; overflow-y: auto;">
-                <table id="excel-preview-table">
-                    <thead>
-                        <tr>
-                            <th>الرقم الوطني / الوزاري</th>
-                            <th>اسم الطالب (في الإكسل)</th>
-                            <th>العلامة</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr><td colspan="3" style="color:#999;">لم يتم رفع أي ملف بعد</td></tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-
-    <!-- محاكاة جدول نظام أجيال الوزاري الرئيسي -->
-    <div class="card" style="margin-top:20px;">
-        <h2>3. جدول رصد العلامات الافتراضي (محاكاة لنظام أجيال المحمي)</h2>
-        <p style="font-size:13px; color:#666;">* هذا الجدول يحتوي على معرفات ومسميات تطابق كود صفحة الوزارة المكتوب برمجياً لتأمين بيئة اختبار حقيقية.</p>
-        
-        <table id="ctl00_PlaceHolderMain_gvDynamicStudentsMark">
-            <thead>
-                <tr>
-                    <th>الرقم الوزاري</th>
-                    <th>اسم الطالب في النظام</th>
-                    <th>تقويم 1 (عمود 2)</th>
-                    <th>تقويم 2 (عمود 3)</th>
-                </tr>
-            </thead>
-            <tbody>
-                <!-- طلاب تجريبيين بأسماء مختلفة قليلاً لإثبات قوة خوارزمية المطابقة اللغوية الخاصة بك -->
-                <tr>
-                    <td>99900101</td>
-                    <td>عبد الرحمن احمد الخطيب <br><small style="color:green;">حاضر</small></td>
-                    <td><input type="text" id="row_0_2_tbMark" name="$$2$tbMark" class="mark-input"></td>
-                    <td><input type="text" id="row_0_3_tbMark" name="$$3$tbMark" class="mark-input"></td>
-                </tr>
-                <tr>
-                    <td>99900102</td>
-                    <td>إيمان اسامه المصري <br><small style="color:green;">حاضر</small></td>
-                    <td><input type="text" id="row_1_2_tbMark" name="$$2$tbMark" class="mark-input"></td>
-                    <td><input type="text" id="row_1_3_tbMark" name="$$3$tbMark" class="mark-input"></td>
-                </tr>
-                <tr>
-                    <td>99900103</td>
-                    <td>ساره محمد العبدالله <br><small style="color:green;">حاضر</small></td>
-                    <td><input type="text" id="row_2_2_tbMark" name="$$2$tbMark" class="mark-input"></td>
-                    <td><input type="text" id="row_2_3_tbMark" name="$$3$tbMark" class="mark-input"></td>
-                </tr>
-            </tbody>
-        </table>
-    </div>
-</div>
-
-<script>
+(function() {
     'use strict';
 
-    // ربط سجلات النظام مع شاشة العرض السوداء ومخرجات المتصفح
-    window.ajyalLog = function(message) {
-        console.log(message);
-        const logBox = document.getElementById("log-output");
-        if (logBox) {
-            logBox.innerHTML += `<br> ${message}`;
-            logBox.scrollTop = logBox.scrollHeight; 
-        }
-    };
-
-    // المتغيرات العامة وإعدادات التحكم المأخوذة من كودك الأساسي
+    // المتغيرات العامة وإعدادات التحكم
+    window.appZoom = parseFloat(localStorage.getItem("ajyal_zoom_level")) || 1.0;
     window.uploadedExcelData = [];
+    window.smartFillExecutionPlan = [];
+    window.forcedPageNumber = 0;
+    window.isEngineRunning = false;
+    window.isAutopilotEnabled = false;
+    let stopEngineFlag = false;
+    let lastDetectedStatusText = "";
+    window.currentSequentialSlice = [];
+    window.currentActiveMode = "";
+
+    // كائنات الذاكرة المؤقتة الطيارة
     let currentSessionPrintedMatches = {};
-    const DB_NAME = "AjyalExcelDB_Standalone";
+    let currentSessionHandwrittenMatches = {};
+    let currentSessionSequentialMatches = {};
+
+    function clearAllSessionMatches() {
+        currentSessionPrintedMatches = {};
+        currentSessionHandwrittenMatches = {};
+        currentSessionSequentialMatches = {};
+        window.ajyalLog("🗑️ [تنظيف تلقائي]: تم تدمير كافة التعديلات اليدوية السابقة لضمان عدم اختلاط الصفوف.");
+    }
+
+    // إعداد قاعدة بيانات الذاكرة المستقرة (IndexedDB)
+    const DB_NAME = "AjyalExcelDB";
     const DB_VERSION = 1;
     const STORE_NAME = "excelDataStore";
 
-    // تفعيل وتأمين دالة تنظيف الذاكرة المؤقتة
-    function clearAllSessionMatches() {
-        currentSessionPrintedMatches = {};
-        window.ajyalLog("🗑️ [تنظيف تلقائي]: تم تدمير كافة التعديلات والمطابقات السابقة.");
+    function initExcelDB() {
+        return new Promise((resolve, reject) => {
+            let request = indexedDB.open(DB_NAME, DB_VERSION);
+            request.onupgradeneeded = function(e) {
+                let db = e.target.result;
+                if (!db.objectStoreNames.contains(STORE_NAME)) {
+                    db.createObjectStore(STORE_NAME, { keyPath: "id" });
+                }
+            };
+            request.onsuccess = function(e) { resolve(e.target.result); };
+            request.onerror = function() { reject("IndexedDB Error"); };
+        });
     }
 
-    // خوارزمية المعايرة اللغوية الخاصة بك لتوحيد الأسماء العربية
+    async function saveExcelToPersistentStorage(dataArray) {
+        let db = await initExcelDB();
+        let tx = db.transaction(STORE_NAME, "readwrite");
+        let store = tx.objectStore(STORE_NAME);
+        store.clear();
+        store.add({ id: "current_file", data: dataArray });
+        window.ajyalLog("💾 تم حفظ كشف الإكسل الأساسي في الجهاز بنجاح.");
+    }
+
+    async function loadExcelFromPersistentStorage() {
+        let db = await initExcelDB();
+        return new Promise((resolve) => {
+            let tx = db.transaction(STORE_NAME, "readonly");
+            let store = tx.objectStore(STORE_NAME);
+            let request = store.get("current_file");
+            request.onsuccess = function() {
+                if(request.result) {
+                    window.uploadedExcelData = request.result.data;
+                    window.ajyalLog(`🔄 تم استعادة الكشف الأصلي تلقائياً: ${window.uploadedExcelData.length} طالب.`);
+                    window.renderExcelPreviewTable();
+                }
+                resolve();
+            };
+            request.onerror = function() { resolve(); };
+        });
+    }
+
+    // دالة المعايرة اللغوية للأسماء
     function normalizeArabicName(name) {
         if (!name) return "";
         let text = String(name).trim();
@@ -252,7 +95,6 @@
         return text;
     }
 
-    // خوارزمية حساب نسبة تشابه النصوص (المطابقة اليدوية الذكية)
     function getStringSimilarity(s1, s2) {
         if (!s1 || !s2) return 0;
         let longer = s1.length > s2.length ? s1 : s2;
@@ -282,5 +124,962 @@
         return costs[s2.length];
     }
 
-    // دالة فحص وتحديد أسطر الطلاب الصالحة في الجدول بناءً على الرقم الوطني
     function getValidStudentRows() {
+        let table = document.getElementById("ctl00_PlaceHolderMain_gvDynamicStudentsMark");
+        if (!table) return [];
+        let trs = table.getElementsByTagName("tr");
+        let validRows = [];
+        for (let i = 0; i < trs.length; i++) {
+            let row = trs[i];
+            if (row.cells && row.cells.length > 3) {
+                let firstCellText = row.cells[0].innerText.trim();
+                if (/^\d{8,12}$/.test(firstCellText)) {
+                    validRows.push(row);
+                }
+            }
+        }
+        return validRows;
+    }
+
+    function getStudentNameFromWebsiteRow(rowIndex) {
+        let rows = getValidStudentRows();
+        let rowElement = rows[rowIndex];
+        if (rowElement) {
+            let cellText = rowElement.cells[1].innerText.trim();
+            let cleanText = cellText.replace(/حاضر/g, "").replace(/غائب/g, "").replace(/إجازة/g, "").trim();
+            return cleanText.split('\n')[0].trim();
+        }
+        return "";
+    }
+
+    function getActualPageRowsCount() {
+        return getValidStudentRows().length;
+    }
+
+    window.checkAndReportOpenTaqweemCols = function() {
+        let rows = getValidStudentRows();
+        if (rows.length === 0) return { list: [], text: "❌ لم يتم العثور على جدول علامات نشط في الصفحة" };
+
+        let rowElement = rows[0];
+        let inputs = rowElement.getElementsByTagName("input");
+        let openCols = [];
+
+        for (let taqweemCol = 2; taqweemCol <= 5; taqweemCol++) {
+            let foundActive = false;
+            for (let i = 0; i < inputs.length; i++) {
+                let inp = inputs[i];
+                if (inp.type === "text" && !inp.disabled && inp.style.display !== "none") {
+                    if (inp.id.includes(`_${taqweemCol}_tbMark`) || inp.name.includes(`$$${taqweemCol}$tbMark`)) {
+                        foundActive = true;
+                        break;
+                    }
+                }
+            }
+            if (foundActive) {
+                let label = (taqweemCol === 2) ? "تقويم 1" : (taqweemCol === 3) ? "تقويم 2" : (taqweemCol === 4) ? "تقويم 3" : "النهائي";
+                openCols.push({ id: taqweemCol, label: label });
+            }
+        }
+
+        if (openCols.length === 0) {
+            let visibleActiveInputs = Array.from(inputs).filter(inp => inp.type === "text" && !inp.disabled && inp.style.display !== "none");
+            if (visibleActiveInputs.length === 1) {
+                let table = document.getElementById("ctl00_PlaceHolderMain_gvDynamicStudentsMark");
+                let headerText = table ? table.getElementsByTagName("tr")[0].innerText : "";
+
+                if (headerText.includes("نهائي") || headerText.includes("النهائي")) {
+                    openCols.push({ id: 5, label: "النهائي الفردي" });
+                } else if (headerText.includes("الثالث")) {
+                    openCols.push({ id: 4, label: "تقويم 3 الفردي" });
+                } else if (headerText.includes("الثاني")) {
+                    openCols.push({ id: 3, label: "تقويم 2 الفردي" });
+                } else {
+                    openCols.push({ id: 2, label: "تقويم 1 الفردي" });
+                }
+            } else if (visibleActiveInputs.length > 1) {
+                openCols.push({ id: 2, label: "تقويم 1" });
+                openCols.push({ id: 3, label: "تقويم 2" });
+                openCols.push({ id: 4, label: "تقويم 3" });
+            }
+        }
+
+        let labelsArray = openCols.map(c => c.label);
+        if (openCols.length > 0) {
+            return { list: openCols, text: `🟢 التقاويم المفتوحة للحقن الآن: [ ${labelsArray.join(" + ")} ]` };
+        } else {
+            return { list: [], text: "🔒 جميع حقول التقاويم مقفلة حالياً في أجيال" };
+        }
+    };
+
+    window.changeAppZoom = function(action) {
+        if(action === 'in') window.appZoom += 0.05;
+        if(action === 'out') window.appZoom -= 0.05;
+        if(action === 'reset') window.appZoom = 1.0;
+
+        if(window.appZoom < 0.7) window.appZoom = 0.7;
+        if(window.appZoom > 1.4) window.appZoom = 1.4;
+
+        localStorage.setItem("ajyal_zoom_level", window.appZoom);
+        applyZoomStyles();
+    };
+
+    function applyZoomStyles() {
+        let container = document.getElementById("full-original-app");
+        if(container) {
+            container.style.transform = `scale(${window.appZoom})`;
+            container.style.transformOrigin = "top center";
+        }
+    }
+
+    window.closePreviewModalAndDestroyMemory = function() {
+        document.getElementById('ajyal-preview-modal').style.display='none';
+        clearAllSessionMatches();
+        window.currentActiveMode = "";
+    };
+
+    function injectAjyalFramework() {
+        let existingLauncher = document.getElementById("ajyal-launcher-rocket");
+        if (existingLauncher) return;
+
+        let launcher = document.createElement('button');
+        launcher.id = "ajyal-launcher-rocket";
+        launcher.innerHTML = "🚀";
+        launcher.style.cssText = `
+            position: fixed !important; bottom: 30px !important; right: 30px !important; z-index: 2147483647 !important;
+            background: #1565c0 !important; color: white !important; border: 4px solid white !important; border-radius: 50% !important;
+            width: 70px !important; height: 70px !important; font-size: 35px !important; cursor: pointer !important;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.6) !important; display: block !important; visibility: visible !important;
+            opacity: 1 !important; padding: 0 !important; margin: 0 !important; line-height: 62px !important; text-align: center !important;
+        `;
+
+        let savedW = localStorage.getItem("ajyal_drag_width") || "850px";
+        let savedH = localStorage.getItem("ajyal_drag_height") || "680px";
+
+        let appContainer = document.getElementById("full-original-app");
+        if (!appContainer) {
+            appContainer = document.createElement('div');
+            appContainer.id = "full-original-app";
+            appContainer.style.cssText = `
+                display:none; position:fixed; top:40px; left:40px;
+                width:${savedW}; height:${savedH};
+                background:#f2f2f2; z-index:2147483646; overflow:auto;
+                border-radius:15px; border:4px solid #1565c0; direction:rtl;
+                font-family:Arial; box-sizing:border-box; padding-bottom:30px;
+                box-shadow: 0 10px 40px rgba(0,0,0,0.4);
+                resize: both; min-width: 450px; min-height: 350px;
+            `;
+
+            appContainer.innerHTML = `
+                <div id="ajyal-drag-bar" style="background:#1565c0; color:white; padding:12px 15px; text-align:right; font-size:12px; font-weight:bold; cursor:move; user-select:none; display:flex; justify-content:space-between; align-items:center;">
+                    <span>🛑 اسحب السكربت من هنا لتحريك النافذة ✥ (يمكنك سحب الحواف السفلية لتكبير وتصغير الطول والعرض بحرية)</span>
+                    <span style="background:#ad1457; padding:2px 8px; border-radius:4px; font-size:11px;">⚡ مستشعر التطابق والتحقق المئوي نشط</span>
+                </div>
+
+                <div style="background:#c62828; color:white; padding:12px; text-align:center; font-weight:bold; cursor:pointer; position:sticky; top:0; z-index:1000002; font-size:16px;" onclick="document.getElementById('full-original-app').style.display='none'">
+                    إغلاق نظام أجيال الذكي [X]
+                </div>
+
+                <style>
+                    .header{ background:#0d47a1; color:white; padding:15px; text-align:center; font-size:19px; font-weight:bold; position:relative; }
+                    .zoom-controls { position:absolute; left:15px; top:12px; display:flex; gap:5px; }
+                    .zoom-btn { background:#ffffff !important; color:#1565c0 !important; border:none; padding:5px 12px; border-radius:4px; cursor:pointer; font-weight:bold; font-size:14px; width:auto !important; margin:0 !important; }
+                    .container{ padding:15px; }
+                    .card{ background:white; border-radius:12px; padding:15px; margin-bottom:15px; box-shadow:0 2px 6px rgba(0,0,0,0.1); box-sizing:border-box; }
+                    .card button{ width:100%; padding:12px; margin-top:10px; border:none; border-radius:10px; font-size:15px; cursor:pointer; font-weight:bold; }
+                    .start-printed{ background:#2e7d32 !important; color:white !important; }
+                    .start-hand{ background:#e65100 !important; color:white !important; }
+                    .start-seq{ background:#0288d1 !important; color:white !important; }
+                    .page-btn { background:#37474f !important; color:white !important; font-size:13px !important; padding:10px !important; margin:0 !important; border-radius:8px !important; }
+                    .stop{ background:#c62828 !important; color:white !important; font-size:15px !important; }
+                    .load{ background:#1565c0 !important; color:white !important; }
+                    .log{ background:black; color:#00ff00; height:110px; overflow:auto; padding:10px; border-radius:10px; font-size:13px; font-family:monospace; direction:ltr; text-align:left; }
+                    .progress{ width:100%; background:#ddd; border-radius:10px; overflow:hidden; margin-top:12px; border:1px solid #ccc; }
+                    .progress-bar{ height:22px; width:0%; background:#2e7d32; transition: width 0.2s; }
+                    table{ width:100%; border-collapse:collapse; text-align:center; margin-top:10px; }
+                    th{ border:1px solid #ccc; padding:8px; font-size:14px; color: black !important; font-weight: bold !important; }
+                    td{ border:1px solid #ccc; padding:8px; font-size:14px; }
+                    th { background:#f5f5f5; }
+                    .grid-buttons { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-top: 10px; }
+                    .grid-pages { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-top: 8px; }
+                    .status-badge { background: #e8f5e9; color: #2e7d32; padding: 12px; border-radius: 8px; font-weight: bold; text-align: center; border: 2px solid #a5d6a7; margin-top: 5px; font-size:15px;}
+                    .taqweem-badge { background: #fff3e0; color: #e65100; border: 2px dashed #ffb74d; padding: 10px; border-radius: 8px; font-weight: bold; text-align: center; margin-top: 8px; font-size: 14px; }
+                    .auto-toggle { background: #4a148c !important; color: white !important; margin-top: 12px !important; box-shadow: 0 4px 10px rgba(74,20,140,0.3); }
+                    .action-btn { padding:4px 8px; font-size:11px; font-weight:bold; cursor:pointer; border:none; border-radius:4px; margin-right:5px; }
+                    .undo-btn { background:#c62828; color:white; }
+                    .edit-btn { background:#0d47a1; color:white; }
+                    .score-pill { display:inline-block; padding:2px 6px; border-radius:4px; font-size:11px; font-weight:bold; margin-right:5px; }
+                </style>
+
+                <div class="header">
+                    AJYAL SYSTEM V6.5.2 (MATCH SCORE TRACKING ACTIVE)
+                    <div class="zoom-controls">
+                        <button type="button" class="zoom-btn" onclick="window.changeAppZoom('in')">➕ تكبير</button>
+                        <button type="button" class="zoom-btn" onclick="window.changeAppZoom('out')">➖ تصغير</button>
+                    </div>
+                </div>
+
+                <div class="container">
+                    <div class="card" style="border: 2px solid #4a148c;">
+                        <h3 style="color:#4a148c; margin-top:0;">🤖 نظام القيادة والطيار الآلي</h3>
+                        <div id="pageStatusBadge" class="status-badge">🔍 جاري جلب حالة الصفحة...</div>
+                        <div id="taqweemStatusBadge" class="taqweem-badge">🔍 جاري فحص حالة الحقول والتقاويم...</div>
+
+                        <p style="font-size:12px; color:#c62828; margin:10px 0 0 0; font-weight:bold;">⚙️ قفل الصفحة يدوياً (للعمل المنفصل صفحة بصفحة):</p>
+                        <div class="grid-pages">
+                            <button type="button" id="btnPage1" class="page-btn" onclick="window.setTargetPage(1)">الصفحة 1 <br>(ابدأ سطر 1)</button>
+                            <button type="button" id="btnPage2" class="page-btn" onclick="window.setTargetPage(2)">الصفحة 2 <br>(ابدأ سطر 21)</button>
+                            <button type="button" id="btnPage3" class="page-btn" onclick="window.setTargetPage(3)">الصفحة 3 <br>(ابدأ سطر 41)</button>
+                        </div>
+
+                        <button type="button" class="auto-toggle" id="btnAutopilot" onclick="window.toggleAutopilot()">⚡ تفعيل الطيار الآلي (حقن ⬅️ حفظ ⬅️ تقليب تلقائي) 🔴 [مغلق]</button>
+                    </div>
+
+                    <div class="card" style="border: 2px solid #2e7d32;">
+                        <h3 style="color:#2e7d32; margin-top:0;">🚀 خيارات ومحركات الحقن (مع إظهار كفاءة ونسبة المطابقة فورا)</h3>
+                        <div class="grid-buttons">
+                            <button type="button" class="start-printed" onclick="window.prepareSmartFillPreview('printed')">📄 1. مطابقة الدفاتر المطبوعة</button>
+                            <button type="button" class="start-hand" onclick="window.prepareSmartFillPreview('handwritten')">✍️ 2. مطابقة كشوف خط اليد</button>
+                            <button type="button" class="start-seq" onclick="window.openSequentialReorderModal()">📊 3. المعاينة المتسلسلة المطلقة</button>
+                        </div>
+                        <button type="button" class="stop" onclick="window.stopAjyalEngine()">🛑 إيقاف اضطراري للمحرك الحاقن</button>
+                        <div class="progress"><div class="progress-bar" id="ajyalProgressBar"></div></div>
+                    </div>
+
+                    <div class="card">
+                        <h3>📁 رفع ملف العلامات</h3>
+                        <input type="file" id="excelFile" accept=".xlsx,.xls">
+                        <button type="button" class="load" onclick="window.loadExcelData()">📂 قراءة وتحميل ملف Excel</button>
+                    </div>
+
+                    <div class="card">
+                        <h3>📋 شاشة تتبع العمليات (Live Log)</h3>
+                        <div class="log" id="ajyalLogBox"></div>
+                    </div>
+
+                    <div class="card">
+                        <div id="ajyalExcelPreviewBox" style="overflow-x:auto; max-height: 180px; overflow-y: auto;">لا توجد بيانات محملة حالياً</div>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(appContainer);
+
+            makeElementDraggable(appContainer, document.getElementById("ajyal-drag-bar"));
+            monitorContainerResize(appContainer);
+
+            let previewModal = document.createElement('div');
+            previewModal.id = "ajyal-preview-modal";
+            previewModal.style.cssText = "display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); z-index:2147483647; justify-content:center; align-items:center; direction:rtl;";
+            previewModal.innerHTML = `
+                <div style="background:white; width:92%; height:92%; border-radius:12px; display:flex; flex-direction:column; overflow:hidden; box-shadow:0 5px 25px rgba(0,0,0,0.5);">
+                    <div id="ajyalPreviewHeader" style="background:#2e7d32; color:white; padding:15px; font-weight:bold; font-size:16px; display:flex; justify-content:space-between; align-items:center;">
+                        <span id="ajyalPreviewTitle">📋 شاشة المراجعة</span>
+                        <button type="button" style="background:none; border:none; color:white; font-size:20px; cursor:pointer;" onclick="window.closePreviewModalAndDestroyMemory()">✕</button>
+                    </div>
+                    <div style="background:#fff3e0; color:#b71c1c; padding:8px 15px; font-size:12px; font-weight:bold; border-bottom:1px solid #ffe0b2;">
+                        ⚠️ تنبيه الحماية: كافة التعديلات اليدوية أدناه طيارة (تُحذف كلياً وتلقائياً فور إغلاق هذه النافذة أو تبديل خيار الرصد لمنع تداخل درجات الصفوف).
+                    </div>
+                    <div id="ajyalPreviewTableContainer" style="flex:1; overflow-y:auto; padding:20px; box-sizing:border-box;"></div>
+                    <div style="background:#f5f5f5; padding:12px; text-align:left; border-top:1px solid #ddd; display:flex; justify-content:flex-end; gap:10px;">
+                        <button type="button" style="background:#757575; color:white; border:none; padding:10px 20px; border-radius:6px; font-weight:bold; cursor:pointer;" onclick="window.closePreviewModalAndDestroyMemory()">✕ إلغاء وتصفير الذاكرة</button>
+                        <button type="button" id="btnExecuteEngineCall" style="background:#2e7d32; color:white; border:none; padding:10px 25px; border-radius:6px; font-weight:bold; cursor:pointer; font-size:15px;" onclick="window.executeSmartFillEngine()">🚀 اعتماد الخطة وبدء الحقن الفوري</button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(previewModal);
+        }
+
+        launcher.onclick = () => {
+            const container = document.getElementById("full-original-app");
+            if(container) {
+                container.style.display = (container.style.display === 'none' ? 'block' : 'none');
+                applyZoomStyles();
+                window.detectCurrentAjyalPage();
+            }
+        };
+
+        document.body.appendChild(launcher);
+    }
+
+    function makeElementDraggable(elmnt, dragBar) {
+        let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
+        if (dragBar) { dragBar.onmousedown = dragMouseDown; } else { elmnt.onmousedown = dragMouseDown; }
+        function dragMouseDown(e) {
+            e = e || window.event;
+            if (e.target.tagName === "BUTTON" || e.target.tagName === "INPUT" || e.target.tagName === "SELECT") return;
+            e.preventDefault(); pos3 = e.clientX; pos4 = e.clientY;
+            document.onmouseup = closeDragElement; document.onmousemove = elementDrag;
+        }
+        function elementDrag(e) {
+            e = e || window.event; e.preventDefault();
+            pos1 = pos3 - e.clientX; pos2 = pos4 - e.clientY; pos3 = e.clientX; pos4 = e.clientY;
+            elmnt.style.top = (elmnt.offsetTop - pos2) + "px"; elmnt.style.left = (elmnt.offsetLeft - pos1) + "px";
+        }
+        function closeDragElement() { document.onmouseup = null; document.onmousemove = null; }
+    }
+
+    function monitorContainerResize(elmnt) {
+        const resizeObserver = new ResizeObserver(entries => {
+            for (let entry of entries) {
+                let width = entry.contentRect.width + 8;
+                let height = entry.contentRect.height + 40;
+                localStorage.setItem("ajyal_drag_width", width + "px");
+                localStorage.setItem("ajyal_drag_height", height + "px");
+            }
+        });
+        resizeObserver.observe(elmnt);
+    }
+
+    window.ajyalLog = function(msg) {
+        const box = document.getElementById("ajyalLogBox");
+        if(box) { box.innerHTML += msg + "<br>"; box.scrollTop = box.scrollHeight; }
+    };
+
+    window.detectCurrentAjyalPage = function() {
+        if(window.isEngineRunning) return window.forcedPageNumber || 1;
+        if(window.forcedPageNumber !== 0) return window.forcedPageNumber;
+
+        let detectedPage = 1;
+        try {
+            let spans = document.querySelectorAll("span.StandardFont");
+            spans.forEach(span => {
+                let txt = span.innerText.trim();
+                let num = parseInt(txt);
+                if(!isNaN(num) && (num === 1 || num === 2 || num === 3 || num === 4)) { detectedPage = num; }
+            });
+        } catch (e) { }
+
+        const badge = document.getElementById("pageStatusBadge");
+        if (badge && !window.isEngineRunning) {
+            let startRowText = (detectedPage === 1) ? "1" : (detectedPage === 2) ? "21" : ((detectedPage - 1) * 20 + 1);
+            badge.innerHTML = `🎯 رصد حقيقي من أجيال: [أنت في الصفحة ${detectedPage}] ⬅️ سيبدأ من سطر (${startRowText})`;
+            badge.style.background = "#e8f5e9"; badge.style.color = "#2e7d32"; badge.style.borderColor = "#a5d6a7";
+        }
+
+        const taqweemBadge = document.getElementById("taqweemStatusBadge");
+        if (taqweemBadge) {
+            let info = window.checkAndReportOpenTaqweemCols();
+            taqweemBadge.innerHTML = info.text;
+            if (info.list.length > 0) {
+                taqweemBadge.style.background = "#e8f5e9"; taqweemBadge.style.color = "#2e7d32"; taqweemBadge.style.borderColor = "#a5d6a7";
+                if (lastDetectedStatusText !== info.text) {
+                    window.ajyalLog(`🔍 [مستشعر تلقائي]: ${info.text}`);
+                    lastDetectedStatusText = info.text;
+                }
+            } else {
+                taqweemBadge.style.background = "#ffebee"; taqweemBadge.style.color = "#c62828"; taqweemBadge.style.borderColor = "#ef9a9a";
+            }
+        }
+
+        if(document.getElementById("btnPage1") && !window.isEngineRunning) {
+            document.getElementById("btnPage1").style.background = (detectedPage === 1) ? "#2e7d32" : "#37474f";
+            document.getElementById("btnPage2").style.background = (detectedPage === 2) ? "#2e7d32" : "#37474f";
+            document.getElementById("btnPage3").style.background = (detectedPage === 3) ? "#2e7d32" : "#37474f";
+        }
+        return detectedPage;
+    };
+
+    window.setTargetPage = function(pageNum) {
+        window.forcedPageNumber = pageNum;
+        document.getElementById("btnPage1").style.background = "#37474f";
+        document.getElementById("btnPage2").style.background = "#37474f";
+        document.getElementById("btnPage3").style.background = "#37474f";
+        document.getElementById(`btnPage${pageNum}`).style.background = "#d84315";
+
+        const badge = document.getElementById("pageStatusBadge");
+        let startRowText = (pageNum === 1) ? "1" : (pageNum === 2) ? "21" : ((pageNum - 1) * 20 + 1);
+
+        if(badge) {
+            badge.innerHTML = `🔒 قفل يدوي صارم: تم تثبيت [الصفحة ${pageNum}] ⬅️ الإدخال يبدأ حتماً من سطر (${startRowText})`;
+            badge.style.background = "#ffebee"; badge.style.color = "#c62828"; badge.style.borderColor = "#ef9a9a";
+        }
+        window.ajyalLog("⚠️ تم تثبيت سطر البداية يدوياً ليكون: [السطر رقم " + startRowText + "]");
+    };
+
+    window.toggleAutopilot = function() {
+        window.isAutopilotEnabled = !window.isAutopilotEnabled;
+        const btn = document.getElementById("btnAutopilot");
+
+        if(window.isAutopilotEnabled) {
+            sessionStorage.setItem("ajyal_autopilot", "true");
+            sessionStorage.removeItem("ajyal_is_waiting_for_refresh");
+            if(btn) {
+                btn.innerHTML = "⚡ الطيار الآلي يعمل الآن... 🟢 [نشط ويراقب]";
+                btn.style.setProperty("background", "#2e7d32", "important");
+            }
+            window.ajyalLog("🤖 تفعيل وضع الطيار الآلي!");
+            window.prepareSmartFillPreview('printed');
+        } else {
+            sessionStorage.removeItem("ajyal_autopilot");
+            sessionStorage.removeItem("ajyal_is_waiting_for_refresh");
+            if(btn) {
+                btn.innerHTML = "⚡ تفعيل الطيار الآلي (حقن ⬅️ حفظ ⬅️ تقليب تلقائي) 🔴 [مغلق]";
+                btn.style.setProperty("background", "#4a148c", "important");
+            }
+            window.ajyalLog("🛑 تم إغلاق الطيار الآلي يدوياً.");
+        }
+    };
+
+    // ==========================================
+    // 📄 محركا 1. المطبوع  و ✍️ 2. خط اليد
+    // ==========================================
+    window.prepareSmartFillPreview = function(mode){
+        if(window.uploadedExcelData.length === 0){ alert("يرجى تحميل الملف أولاً"); return; }
+        let totalPageRows = getActualPageRowsCount();
+        if(totalPageRows === 0) { alert("تأكد من فتح جدول العلامات في أجيال."); return; }
+
+        if(window.currentActiveMode !== mode) {
+            clearAllSessionMatches();
+            window.currentActiveMode = mode;
+        }
+
+        let finalPageNumber = (window.forcedPageNumber !== 0) ? window.forcedPageNumber : window.detectCurrentAjyalPage();
+        let activeSessionMatches = (mode === 'printed') ? currentSessionPrintedMatches : currentSessionHandwrittenMatches;
+
+        window.smartFillExecutionPlan = [];
+
+        let headerStyle = document.getElementById("ajyalPreviewHeader");
+        let triggerBtn = document.getElementById("btnExecuteEngineCall");
+        if(triggerBtn) { triggerBtn.setAttribute("onclick", "window.executeSmartFillEngine()"); triggerBtn.innerText = "🚀 اعتماد الخطة وبدء الحقن الفوري"; }
+
+        if(mode === 'handwritten') {
+            if(headerStyle) headerStyle.style.background = "#e65100";
+            let title = document.getElementById("ajyalPreviewTitle");
+            if(title) title.innerText = `✍️ مطابقة كشوف خط اليد - الصفحة [ ${finalPageNumber} ]`;
+        } else {
+            if(headerStyle) headerStyle.style.background = "#2e7d32";
+            let title = document.getElementById("ajyalPreviewTitle");
+            if(title) title.innerText = `📄 مطابقة الدفاتر المطبوعة - الصفحة [ ${finalPageNumber} ]`;
+        }
+
+        let tableHTML = `<table style="width:100%; border-collapse: collapse; font-size:13px; text-align:right;">
+            <thead>
+                <tr style="background:#424242; color:black !important;">
+                    <th style="padding:8px; border:1px solid #ddd; text-align:center; color:black !important;">السطر</th>
+                    <th style="padding:8px; border:1px solid #ddd; color:black !important;">الاسم الفعلي في أجيال</th>
+                    <th style="padding:8px; border:1px solid #ddd; color:black !important;">الاسم المطابق المكتشف ونسبة المحاكاة</th>
+                    <th style="padding:8px; border:1px solid #ddd; text-align:center; color:black !important;">إجراءات التعديل المؤقت</th>
+                    <th style="padding:8px; border:1px solid #ddd; text-align:center; color:black !important;">تقويم 1</th>
+                    <th style="padding:8px; border:1px solid #ddd; text-align:center; color:black !important;">تقويم 2</th>
+                    <th style="padding:8px; border:1px solid #ddd; text-align:center; color:black !important;">تقويم 3</th>
+                    <th style="padding:8px; border:1px solid #ddd; text-align:center; color:black !important;">النهائي</th>
+                </tr>
+            </thead>
+            <tbody>`;
+
+        let poolData = [...window.uploadedExcelData];
+        let matchesMap = {};
+        let unmappedRows = [];
+
+        for(let i = 0; i < totalPageRows; i++){
+            let actualWebsiteName = getStudentNameFromWebsiteRow(i);
+            if(actualWebsiteName === "") continue;
+
+            let normalizedWebsiteName = normalizeArabicName(actualWebsiteName);
+
+            // التحقق اليدوي وحساب نسبة المطابقة الحقيقية للاسم المختار يدوياً بدلاً من التثبيت على 100%
+            if(activeSessionMatches[i] !== undefined) {
+                let savedId = activeSessionMatches[i];
+                let matchedStudent = window.uploadedExcelData.find(s => s.id == savedId);
+                if(matchedStudent) {
+                    let calcScore = getStringSimilarity(normalizedWebsiteName, matchedStudent.normalizedName);
+                    matchesMap[i] = { student: matchedStudent, score: calcScore, isSavedManual: true };
+                    continue;
+                }
+            }
+
+            let bestMatch = null; let bestScore = 0;
+
+            poolData.forEach((excelStudent) => {
+                let score = getStringSimilarity(normalizedWebsiteName, excelStudent.normalizedName);
+                if (score > bestScore) { bestScore = score; bestMatch = excelStudent; }
+            });
+
+            let isSuccessfulMatch = false;
+            if (mode === 'handwritten') {
+                if (bestMatch && bestScore >= 0.75) isSuccessfulMatch = true;
+            } else {
+                if (bestMatch && bestScore >= 0.90) isSuccessfulMatch = true;
+            }
+
+            if(isSuccessfulMatch){
+                matchesMap[i] = { student: bestMatch, score: bestScore, isSavedManual: false };
+            }
+        }
+
+        let allMatchedIds = Object.values(matchesMap).map(m => m.student.id);
+        let unmatchedPool = window.uploadedExcelData.filter(excelStudent => !allMatchedIds.includes(excelStudent.id));
+
+        for(let i = 0; i < totalPageRows; i++){
+            let actualWebsiteName = getStudentNameFromWebsiteRow(i);
+            if(actualWebsiteName === "") {
+                tableHTML += `<tr style="background:#ffebee;"><td style="padding:5px; border:1px solid #ddd;">${i+1}</td><td colspan="7" style="color:#c62828;">❌ تعذر قراءة الاسم برمجياً</td></tr>`;
+                continue;
+            }
+
+            if(matchesMap[i]){
+                let bestMatch = matchesMap[i].student;
+                let scorePercentage = Math.round(matchesMap[i].score * 100);
+
+                let isSavedText = matchesMap[i].isSavedManual ? "⭐ تعديل يدوّي مؤقت: " : "✅ ربط ذكي: ";
+                let rowBg = matchesMap[i].isSavedManual ? "background:#e3f2fd; color:#0d47a1;" : "background:#e8f5e9; color:#1b5e20;";
+                let pillBg = scorePercentage >= 90 ? "background:#2e7d32; color:white;" : "background:#ef6c00; color:white;";
+
+                window.smartFillExecutionPlan.push({
+                    index: i, type: matchesMap[i].isSavedManual ? 'manual' : 'auto', excelId: bestMatch.id, name: actualWebsiteName,
+                    m1: bestMatch.mark1, m2: bestMatch.mark2, m3: bestMatch.mark3, m4: bestMatch.mark4
+                });
+
+                tableHTML += `<tr style="${rowBg}" id="preview_row_${i}">
+                    <td style="padding:6px; border:1px solid #ddd; text-align:center;">${i+1}</td>
+                    <td style="padding:6px; border:1px solid #ddd; font-weight:bold;">${actualWebsiteName}</td>
+                    <td style="padding:6px; border:1px solid #ddd;" id="match_cell_${i}">
+                        ${isSavedText} <b>${bestMatch.name}</b>
+                        <span class="score-pill" style="${pillBg}">⚙️ ${scorePercentage}%</span>
+                    </td>
+                    <td style="padding:6px; border:1px solid #ddd; text-align:center;" id="action_cell_${i}">
+                        <button type="button" class="action-btn edit-btn" onclick="window.enableRowEditingInline(${i}, '${mode}')">⚙️ تغيير الخيار</button>
+                        ${matchesMap[i].isSavedManual ? `<button type="button" class="action-btn undo-btn" onclick="window.undoManualMatch(${i}, '${mode}')">↩️ تراجع للأصلي</button>` : ''}
+                    </td>
+                    <td style="padding:6px; border:1px solid #ddd; text-align:center;">${bestMatch.mark1}</td>
+                    <td style="padding:6px; border:1px solid #ddd; text-align:center;">${bestMatch.mark2}</td>
+                    <td style="padding:6px; border:1px solid #ddd; text-align:center;">${bestMatch.mark3}</td>
+                    <td style="padding:6px; border:1px solid #ddd; text-align:center;">${bestMatch.mark4}</td>
+                </tr>`;
+            } else {
+                unmappedRows.push({ rowIndex: i, websiteName: actualWebsiteName });
+
+                tableHTML += `<tr style="background:#fff3e0; color:#d84315;" id="preview_row_${i}">
+                    <td style="padding:6px; border:1px solid #ddd; text-align:center;">${i+1}</td>
+                    <td style="padding:6px; border:1px solid #ddd; font-weight:bold;">${actualWebsiteName}</td>
+                    <td style="padding:6px; border:1px solid #ddd;" id="match_cell_${i}">🔍 لم يكتشف تلقائياً (اختر من القائمة)</td>
+                    <td style="padding:6px; border:1px solid #ddd; text-align:center;" id="action_cell_${i}">-</td>
+                    <td style="padding:6px; border:1px solid #ddd; text-align:center;">-</td>
+                    <td style="padding:6px; border:1px solid #ddd; text-align:center;">-</td>
+                    <td style="padding:6px; border:1px solid #ddd; text-align:center;">-</td>
+                    <td style="padding:6px; border:1px solid #ddd; text-align:center;">-</td>
+                </tr>`;
+            }
+        }
+
+        tableHTML += `</tbody></table>`;
+        let containerBox = document.getElementById("ajyalPreviewTableContainer");
+        if(containerBox) containerBox.innerHTML = tableHTML;
+
+        let modal = document.getElementById("ajyal-preview-modal");
+        if(modal) modal.style.display = "flex";
+
+        unmappedRows.forEach(rowInfo => {
+            window.injectSelectOptionInline(rowInfo.rowIndex, mode, unmatchedPool);
+        });
+
+        if(window.isAutopilotEnabled && unmappedRows.length === 0) { window.executeSmartFillEngine(); }
+    };
+
+    window.injectSelectOptionInline = function(rowIndex, mode, customPool) {
+        let cell = document.getElementById(`match_cell_${rowIndex}`);
+        if(!cell) return;
+
+        let actualWebsiteName = getStudentNameFromWebsiteRow(rowIndex);
+        let normalizedWebsiteName = normalizeArabicName(actualWebsiteName);
+
+        // استخدام الكشف العام لضمان وجود البيانات دون حدوث عطل لزر تغيير الخيار
+        let pool = customPool || window.uploadedExcelData;
+        let selectHTML = `<select id="select_opt_${rowIndex}" onchange="window.updateManualSelectionAndSave(${rowIndex}, this.value, '${mode}')" style="width:100%; padding:4px; font-size:12px; border-radius:4px; border:1px solid #1565c0; background:#fff8e1;">`;
+        selectHTML += `<option value="">--- اختر الاسم الصحيح (مرفق نسبة المطابقة اللغوية الفورية) ---</option>`;
+
+        pool.forEach(student => {
+            let score = getStringSimilarity(normalizedWebsiteName, student.normalizedName);
+            let pct = Math.round(score * 100);
+            selectHTML += `<option value="${student.id}">${student.name} [ مطابقة: ${pct}% ]</option>`;
+        });
+        selectHTML += `</select>`;
+        cell.innerHTML = selectHTML;
+
+        let actionCell = document.getElementById(`action_cell_${rowIndex}`);
+        if(actionCell) {
+            actionCell.innerHTML = `<button type="button" class="action-btn undo-btn" onclick="window.cancelRowSelectionInline(${rowIndex}, '${mode}')">❌ إلغاء</button>`;
+        }
+    };
+
+    window.enableRowEditingInline = function(rowIndex, mode) {
+        // نمرر مصفوفة البيانات الكاملة لضمان فتح الخيارات مجدداً عند رغبة المعلم في تعديل الخيار المكتشف
+        window.injectSelectOptionInline(rowIndex, mode, window.uploadedExcelData);
+    };
+
+    window.cancelRowSelectionInline = function(rowIndex, mode) {
+        window.prepareSmartFillPreview(mode);
+    };
+
+    window.undoManualMatch = function(rowIndex, mode) {
+        let activeSessionMatches = (mode === 'printed') ? currentSessionPrintedMatches : currentSessionHandwrittenMatches;
+        if (activeSessionMatches[rowIndex] !== undefined) {
+            delete activeSessionMatches[rowIndex];
+            window.ajyalLog(`↩️ تم إرجاع السطر (${rowIndex + 1}) للنظام التلقائي الذكي.`);
+        }
+        window.prepareSmartFillPreview(mode);
+    };
+
+    window.updateManualSelectionAndSave = function(rowIndex, excelId, mode) {
+        if(!excelId) return;
+        let activeSessionMatches = (mode === 'printed') ? currentSessionPrintedMatches : currentSessionHandwrittenMatches;
+        activeSessionMatches[rowIndex] = excelId;
+        window.ajyalLog(`🎵 تم تطبيق التعديل للسطر [${rowIndex+1}] مؤقتاً في الرام (سيحذف فور الإغلاق).`);
+        window.prepareSmartFillPreview(mode);
+    };
+
+
+    // ==========================================
+    // 📊 3. محرك المعاينة المتسلسلة المطلقة
+    // ==========================================
+    window.openSequentialReorderModal = function() {
+        if(window.uploadedExcelData.length === 0){ alert("يرجى تحميل ملف البيانات أولاً"); return; }
+        let totalPageRows = getActualPageRowsCount();
+        if(totalPageRows === 0) { alert("تأكد من فتح جدول العلامات في أجيال."); return; }
+
+        if(window.currentActiveMode !== "sequential") {
+            clearAllSessionMatches();
+            window.currentActiveMode = "sequential";
+        }
+
+        let finalPageNumber = (window.forcedPageNumber !== 0) ? window.forcedPageNumber : window.detectCurrentAjyalPage();
+        let excelStartIndex = (finalPageNumber - 1) * 20;
+
+        window.currentSequentialSlice = [];
+
+        for(let i=0; i<totalPageRows; i++) {
+            if(currentSessionSequentialMatches[i] !== undefined) {
+                let savedId = currentSessionSequentialMatches[i];
+                let matchedStudent = window.uploadedExcelData.find(s => s.id == savedId);
+                if(matchedStudent) {
+                    window.currentSequentialSlice.push({...matchedStudent});
+                    continue;
+                }
+            }
+
+            let currentExcelRowIndex = excelStartIndex + i;
+            let studentData = window.uploadedExcelData[currentExcelRowIndex];
+            if (studentData) {
+                window.currentSequentialSlice.push({...studentData});
+            } else {
+                window.currentSequentialSlice.push({id:-1, name:"-- نهاية كشف الإكسل --", mark1:"", mark2:"", mark3:"", mark4:""});
+            }
+        }
+
+        let headerStyle = document.getElementById("ajyalPreviewHeader");
+        if(headerStyle) headerStyle.style.background = "#0288d1";
+        let title = document.getElementById("ajyalPreviewTitle");
+        if(title) title.innerText = `📊 المعاينة المتسلسلة المطلقة (مع فحص التوازن اللغوي للأسماء) - الصفحة [ ${finalPageNumber} ]`;
+
+        let triggerBtn = document.getElementById("btnExecuteEngineCall");
+        if(triggerBtn) { triggerBtn.setAttribute("onclick", "window.executeSequentialSliceEngine()"); triggerBtn.innerText = "📊 ابدأ الحقن المتسلسل المعتمد الآن"; }
+
+        window.renderSequentialReorderTable();
+        let modal = document.getElementById("ajyal-preview-modal");
+        if(modal) modal.style.display = "flex";
+    };
+
+    window.renderSequentialReorderTable = function() {
+        let totalPageRows = getActualPageRowsCount();
+        let fullPool = window.uploadedExcelData;
+
+        let tableHTML = `<p style="font-size:13px; color:#1a237e; font-weight:bold;">📊 نمط رصد متسلسل مطلق بالكامل ومعزول ومزود بنسب المطابقة اللغوية المباشرة لتأكيد سلامة السلسلة وعدم الإزاحة:</p>
+        <table style="width:100%; border-collapse: collapse; font-size:13px; text-align:right;">
+            <thead>
+                <tr style="background:#37474f; color:black !important;">
+                    <th style="padding:8px; border:1px solid #ddd; text-align:center; color:black !important;">السطر</th>
+                    <th style="padding:8px; border:1px solid #ddd; background:#f5f5f5; color:black !important;">الاسم الحقيقي الحالي في منظومة أجيال</th>
+                    <th style="padding:8px; border:1px solid #ddd; background:#f5f5f5; color:black !important;">📊 اختيار الاسم المتسلسل ونسبة جودته لسطر أجيال</th>
+                    <th style="padding:8px; border:1px solid #ddd; text-align:center; color:black !important;">إجراءات التراجع للجلسة</th>
+                    <th style="padding:8px; border:1px solid #ddd; text-align:center; color:black !important;">تقويم 1</th>
+                    <th style="padding:8px; border:1px solid #ddd; text-align:center; color:black !important;">تقويم 2</th>
+                    <th style="padding:8px; border:1px solid #ddd; text-align:center; color:black !important;">تقويم 3</th>
+                    <th style="padding:8px; border:1px solid #ddd; text-align:center; color:black !important;">النهائي</th>
+                </tr>
+            </thead>
+            <tbody>`;
+
+        for(let i=0; i<totalPageRows; i++) {
+            let actualWebsiteName = getStudentNameFromWebsiteRow(i);
+            let normalizedWebsiteName = normalizeArabicName(actualWebsiteName);
+
+            let excelItem = window.currentSequentialSlice[i];
+            let hasManualSaved = currentSessionSequentialMatches[i] !== undefined;
+            let rowStyle = hasManualSaved ? "background:#fff9c4;" : "background:white;";
+
+            let currentLineScore = (excelItem.id !== -1) ? getStringSimilarity(normalizedWebsiteName, normalizeArabicName(excelItem.name)) : 0;
+            let currentLinePct = Math.round(currentLineScore * 100);
+            let pillBg = currentLinePct >= 85 ? "background:#004d40; color:white;" : "background:#b71c1c; color:white;";
+
+            tableHTML += `<tr style="${rowStyle}" id="seq_row_${i}">
+                <td style="padding:6px; border:1px solid #ddd; text-align:center; font-weight:bold;">${i+1}</td>
+                <td style="padding:6px; border:1px solid #ddd; font-weight:bold; color:#0d47a1; background:#f0f4c3;">${actualWebsiteName}</td>
+                <td style="padding:6px; border:1px solid #ddd; background:#e0f2f1;">
+                    <div style="display:flex; align-items:center; gap:8px;">
+                        <span class="score-pill" style="${pillBg} padding:4px 6px;">🎯 تطابق السلسلة: ${currentLinePct}%</span>
+                        <select onchange="window.updateSingleSeqRowAndSave(${i}, this.value)" style="flex:1; padding:5px; font-size:12px; font-weight:bold; color:#004d40; border-radius:4px; border:1px solid #004d40;">
+                            <option value="${excelItem.id}">${excelItem.name} ${hasManualSaved?'(⭐ تغيير مؤقت)':''}</option>`;
+
+                            fullPool.forEach(pData => {
+                                if(pData.id !== excelItem.id) {
+                                    let optionScore = getStringSimilarity(normalizedWebsiteName, pData.normalizedName);
+                                    let optionPct = Math.round(optionScore * 100);
+                                    tableHTML += `<option value="${pData.id}">${pData.name} [ تطابق: ${optionPct}% ]</option>`;
+                                }
+                            });
+
+            tableHTML += `      </select>
+                    </div>
+                </td>
+                <td style="padding:6px; border:1px solid #ddd; text-align:center;">
+                    ${hasManualSaved ? `<button type="button" class="action-btn undo-btn" onclick="window.undoSequentialMatch(${i})">↩️ إلغاء التغيير</button>` : '-'}
+                </td>
+                <td style="padding:6px; border:1px solid #ddd; text-align:center; background:#fafafa;">${excelItem.mark1}</td>
+                <td style="padding:6px; border:1px solid #ddd; text-align:center; background:#fafafa;">${excelItem.mark2}</td>
+                <td style="padding:6px; border:1px solid #ddd; text-align:center; background:#fafafa;">${excelItem.mark3}</td>
+                <td style="padding:6px; border:1px solid #ddd; text-align:center; background:#fafafa;">${excelItem.mark4}</td>
+            </tr>`;
+        }
+
+        tableHTML += `</tbody></table>`;
+        let containerBox = document.getElementById("ajyalPreviewTableContainer");
+        if(containerBox) containerBox.innerHTML = tableHTML;
+    };
+
+    window.updateSingleSeqRowAndSave = function(sliceIndex, newExcelId) {
+        if(!newExcelId) return;
+        let student = window.uploadedExcelData.find(s => s.id == newExcelId);
+        if(student) {
+            window.currentSequentialSlice[sliceIndex] = {...student};
+            currentSessionSequentialMatches[sliceIndex] = newExcelId;
+            window.ajyalLog(`📊 تم تعديل سطر المتسلسل [${sliceIndex+1}] مؤقتاً في الرام.`);
+            window.openSequentialReorderModal();
+        }
+    };
+
+    window.undoSequentialMatch = function(sliceIndex) {
+        if(currentSessionSequentialMatches[sliceIndex] !== undefined) {
+            delete currentSessionSequentialMatches[sliceIndex];
+            window.ajyalLog(`↩️ تم إلغاء تعديل المتسلسل للسطر [${sliceIndex+1}].`);
+        }
+        window.openSequentialReorderModal();
+    };
+
+    // ==========================================
+    // 🚀 محركات تنفيذ وحقن البيانات الفورية
+    // ==========================================
+    window.executeSequentialSliceEngine = async function() {
+        let modal = document.getElementById("ajyal-preview-modal");
+        if(modal) modal.style.display = "none";
+
+        stopEngineFlag = false;
+        let app = document.getElementById("full-original-app");
+        if(app) app.style.opacity = "0.5";
+
+        let totalPageRows = getActualPageRowsCount();
+        window.ajyalLog(`📊 بدء الحقن المتسلسل العازل...`);
+
+        for(let i = 0; i < totalPageRows; i++){
+            if(stopEngineFlag) break;
+            let studentData = window.currentSequentialSlice[i];
+            if(!studentData || studentData.id === -1) continue;
+
+            window.writeMarkToField(i, 2, studentData.mark1);
+            window.writeMarkToField(i, 3, studentData.mark2);
+            window.writeMarkToField(i, 4, studentData.mark3);
+            window.writeMarkToField(i, 5, studentData.mark4);
+
+            let pBar = document.getElementById("ajyalProgressBar");
+            if(pBar) pBar.style.width = Math.floor(((i+1)/totalPageRows)*100) + "%";
+            await new Promise(r => setTimeout(r, 250));
+        }
+
+        if(app) app.style.opacity = "1.0";
+        window.ajyalLog("🏁 انتهى الحقن المتسلسل المعزول بنجاح.");
+        clearAllSessionMatches();
+        alert("اكتمل الرصد المتسلسل! اضغط على زر الحفظ الأصلي بالمنظومة لتثبيت العلامات.");
+    };
+
+    window.executeSmartFillEngine = async function(){
+        let modal = document.getElementById("ajyal-preview-modal");
+        if(modal) modal.style.display = "none";
+        if(window.smartFillExecutionPlan.length === 0) return;
+
+        stopEngineFlag = false;
+        let app = document.getElementById("full-original-app");
+        if(app) app.style.opacity = "0.5";
+        window.ajyalLog(`⏳ جاري حقن درجات الخطة الذكية الحالية...`);
+
+        for(let k = 0; k < window.smartFillExecutionPlan.length; k++){
+            if(stopEngineFlag) break;
+            let item = window.smartFillExecutionPlan[k];
+
+            window.writeMarkToField(item.index, 2, item.m1);
+            window.writeMarkToField(item.index, 3, item.m2);
+            window.writeMarkToField(item.index, 4, item.m3);
+            window.writeMarkToField(item.index, 5, item.m4);
+
+            let pBar = document.getElementById("ajyalProgressBar");
+            if(pBar) pBar.style.width = Math.floor(((k+1)/window.smartFillExecutionPlan.length)*100) + "%";
+            await new Promise(r => setTimeout(r, 250));
+        }
+
+        if(app) app.style.opacity = "1.0";
+        window.ajyalLog("🏁 اكتمل رصد الصفحة الحالية.");
+        clearAllSessionMatches();
+
+        if(!stopEngineFlag && window.isAutopilotEnabled) {
+            window.ajyalLog("💾 طيار آلي: جاري إرسال أمر الحفظ التلقائي...");
+            await new Promise(r => setTimeout(r, 1200));
+            let saveBtn = document.getElementById("ctl00_PlaceHolderMain_btnSave");
+            if(saveBtn) {
+                let finalPageNumber = (window.forcedPageNumber !== 0) ? window.forcedPageNumber : window.detectCurrentAjyalPage();
+                let nextPage = finalPageNumber + 1;
+                sessionStorage.setItem("ajyal_next_target_page", nextPage);
+                sessionStorage.setItem("ajyal_is_waiting_for_refresh", "true");
+                saveBtn.click();
+            }
+        } else if (!window.isAutopilotEnabled) {
+            alert("تم الحقن بنجاح! يرجى الضغط على زر الحفظ الأصلي لمنظومة أجيال لتثبيت الملف.");
+        }
+    };
+
+    window.writeMarkToField = function(studentIdx, taqweemCol, value){
+        let rows = getValidStudentRows();
+        let rowElement = rows[studentIdx];
+        if (rowElement) {
+            let inputs = rowElement.getElementsByTagName("input");
+            let targetInput = null;
+
+            for (let i = 0; i < inputs.length; i++) {
+                let inp = inputs[i];
+                if (inp.type === "text" && (inp.id.includes(`_${taqweemCol}_tbMark`) || inp.name.includes(`$$${taqweemCol}$tbMark`))) {
+                    targetInput = inp;
+                    break;
+                }
+            }
+            if (!targetInput) {
+                let textInputs = Array.from(inputs).filter(inp => inp.type === "text" && inp.style.display !== "none" && !inp.disabled);
+                if (textInputs.length > 0) {
+                    if (textInputs.length === 1) { targetInput = textInputs[0]; } else { targetInput = textInputs[taqweemCol - 2]; }
+                }
+            }
+            if(targetInput && !targetInput.disabled && targetInput.style.display !== "none"){
+                targetInput.focus();
+                targetInput.value = value !== undefined && value !== null ? value : "";
+                targetInput.dispatchEvent(new Event('input', { bubbles: true }));
+                targetInput.dispatchEvent(new Event('change', { bubbles: true }));
+                targetInput.dispatchEvent(new Event('blur', { bubbles: true }));
+            }
+        }
+    };
+
+    window.loadExcelData = function(){
+        const file = document.getElementById("excelFile").files[0];
+        if(!file){ alert("الرجاء اختيار ملف Excel أولاً"); return; }
+        const reader = new FileReader();
+        reader.onload = async function(e){
+            const data = new Uint8Array(e.target.result);
+            const workbook = XLSX.read(data, {type:'array'});
+            const sheet = workbook.Sheets[workbook.SheetNames[0]];
+            let rawData = XLSX.utils.sheet_to_json(sheet);
+
+            if(rawData.length === 0) { alert("الملف فارغ!"); return; }
+            let keys = Object.keys(rawData[0] || {});
+
+            let nameKey = keys.find(k => k.includes("اسم") || k.toLowerCase().includes("name")) || keys[1];
+            let m1Key = keys[2]; let m2Key = keys[3]; let m3Key = keys[4]; let m4Key = keys[5];
+
+            window.uploadedExcelData = rawData.map((row, index) => ({
+                id: index,
+                name: String(row[nameKey] || "").trim(),
+                normalizedName: normalizeArabicName(row[nameKey]),
+                mark1: row[m1Key] !== undefined ? row[m1Key] : "",
+                mark2: row[m2Key] !== undefined ? row[m2Key] : "",
+                mark3: row[m3Key] !== undefined ? row[m3Key] : "",
+                mark4: row[m4Key] !== undefined ? row[m4Key] : ""
+            }));
+
+            window.ajyalLog(`✅ تم تحميل الكشف بنجاح وفيه ${window.uploadedExcelData.length} طالب.`);
+            await saveExcelToPersistentStorage(window.uploadedExcelData);
+            window.renderExcelPreviewTable();
+        };
+        reader.readAsArrayBuffer(file);
+    };
+
+    window.renderExcelPreviewTable = function() {
+        const box = document.getElementById("ajyalExcelPreviewBox");
+        if(!box || window.uploadedExcelData.length === 0) return;
+
+        let html = `<b>📊 كشف الدرجات الأصلي المستقر بالجهاز:</b>
+                    <table style="width:100%; border-collapse:collapse; font-size:12px; direction: rtl;">
+                    <tr style="background:#1565c0; color:black !important;">
+                        <th style="border:1px solid #ccc; padding:5px; color:black !important;">الاسم</th>
+                        <th style="border:1px solid #ccc; padding:5px; color:black !important;">تقويم 1</th>
+                        <th style="border:1px solid #ccc; padding:5px; color:black !important;">تقويم 2</th>
+                        <th style="border:1px solid #ccc; padding:5px; color:black !important;">تقويم 3</th>
+                        <th style="border:1px solid #ccc; padding:5px; color:black !important;">النهائي</th>
+                    </tr>`;
+        window.uploadedExcelData.forEach(s => {
+            html += `<tr>
+                <td style="border:1px solid #ccc; padding:4px; font-weight:bold;">${s.name}</td>
+                <td style="border:1px solid #ccc; padding:4px; text-align:center;">${s.mark1}</td>
+                <td style="border:1px solid #ccc; padding:4px; text-align:center;">${s.mark2}</td>
+                <td style="border:1px solid #ccc; padding:4px; text-align:center;">${s.mark3}</td>
+                <td style="border:1px solid #ccc; padding:4px; text-align:center;">${s.mark4}</td>
+            </tr>`;
+        });
+        html += `</table>`; box.innerHTML = html;
+    };
+
+    window.stopAjyalEngine = function() {
+        stopEngineFlag = true; window.isEngineRunning = false;
+        let app = document.getElementById("full-original-app"); if(app) app.style.opacity = "1.0";
+        window.ajyalLog("🛑 تم إيقاف المحركات الحاقنة اضطرارياً.");
+    };
+
+    setInterval(() => {
+        injectAjyalFramework();
+
+        if(sessionStorage.getItem("ajyal_autopilot") === "true" && !window.isEngineRunning) {
+            window.isAutopilotEnabled = true;
+            const btn = document.getElementById("btnAutopilot");
+            if(btn) {
+                btn.innerHTML = "⚡ الطيار الآلي يعمل الآن... 🟢 [نشط ويراقب]";
+                btn.style.setProperty("background", "#2e7d32", "important");
+            }
+
+            let pendingPage = sessionStorage.getItem("ajyal_next_target_page");
+            if(pendingPage) {
+                let targetPageNum = parseInt(pendingPage);
+                sessionStorage.removeItem("ajyal_next_target_page");
+                window.ajyalLog(`🔄 طيار آلي: جاري الانتقال لصفحة [ ${targetPageNum} ]...`);
+
+                let targetLinkId = `ctl00_PlaceHolderMain_gvDynamicStudentsMark_ctl13_lbtn${targetPageNum - 1}`;
+                let pageLinkElement = document.getElementById(targetLinkId);
+
+                if(pageLinkElement) { pageLinkElement.click(); } else {
+                    let foundFallback = false;
+                    let allLinks = document.querySelectorAll("table a");
+                    allLinks.forEach(link => {
+                        if(link.innerText.trim() == targetPageNum) { link.click(); foundFallback = true; }
+                    });
+                    if(!foundFallback) { sessionStorage.setItem("ajyal_next_target_page", targetPageNum); }
+                }
+            } else {
+                if(sessionStorage.getItem("ajyal_is_waiting_for_refresh") === "true") {
+                    sessionStorage.removeItem("ajyal_is_waiting_for_refresh");
+                    window.ajyalLog("⏳ جاري الانتظار لاستقرار الأسماء الجديدة من الخادم...");
+                    setTimeout(() => {
+                        if(sessionStorage.getItem("ajyal_autopilot") === "true" && !window.isEngineRunning) {
+                            window.prepareSmartFillPreview(window.currentActiveMode);
+                        }
+                    }, 4000);
+                }
+            }
+        }
+        window.detectCurrentAjyalPage();
+    }, 2000);
+
+    setTimeout(() => { loadExcelFromPersistentStorage(); }, 1000);
+
+})();
