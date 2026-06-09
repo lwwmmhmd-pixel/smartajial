@@ -3,157 +3,243 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AJYAL ENTERPRISE SYSTEM - MASTER ULTIMATE V6.5.2</title>
-    <!-- استدعاء مكتبة قراءة ملفات الإكسل المحددة في التمبرمونكي سابقاً -->
+    <title>نظام أجيال المستقل الذكي - لرفع ورصد العلامات</title>
+    
+    <!-- مكتبة قراءة ملفات الإكسل المعتمدة -->
     <script src="https://jsdelivr.net"></script>
     
     <style>
+        :root {
+            --primary-color: #2c3e50;
+            --accent-color: #27ae60;
+            --bg-color: #f8f9fa;
+            --card-bg: #ffffff;
+        }
+
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f4f6f9;
+            background-color: var(--bg-color);
             color: #333;
             margin: 0;
             padding: 20px;
         }
+
         .container {
-            max-width: 900px;
+            max-width: 1100px;
             margin: 0 auto;
-            background: #fff;
-            padding: 30px;
+        }
+
+        .header {
+            background: linear-gradient(135deg, var(--primary-color), #34495e);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .grid { grid-template-columns: 1fr; }
+        }
+
+        .card {
+            background: var(--card-bg);
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            border: 1px solid #e0e0e0;
+        }
+
+        h2 {
+            margin-top: 0;
+            color: var(--primary-color);
+            border-bottom: 2px solid #eaeaea;
+            padding-bottom: 8px;
+        }
+
+        .file-upload {
+            border: 2px dashed #3498db;
+            padding: 20px;
+            text-align: center;
             border-radius: 8px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            background: #ecf0f1;
+            cursor: pointer;
         }
-        h1 {
-            color: #2c3e50;
-            border-bottom: 2px solid #3498db;
-            padding-bottom: 10px;
-            font-size: 24px;
-        }
-        .description {
-            color: #7f8c8d;
-            font-size: 14px;
-            margin-bottom: 20px;
-        }
-        .status-box {
-            background-color: #e8f4fd;
-            border-right: 5px solid #3498db;
-            padding: 15px;
-            border-radius: 4px;
-            margin-bottom: 20px;
-        }
+
         .btn {
-            background-color: #3498db;
+            background-color: var(--accent-color);
             color: white;
             border: none;
-            padding: 10px 20px;
-            font-size: 16px;
-            border-radius: 4px;
+            padding: 10px 15px;
+            font-size: 14px;
+            border-radius: 5px;
             cursor: pointer;
-            transition: background 0.3s;
+            font-weight: bold;
+            transition: background 0.2s;
         }
-        .btn:hover {
-            background-color: #2980b9;
+
+        .btn:hover { background-color: #219653; }
+        .btn-blue { background-color: #3498db; }
+        .btn-blue:hover { background-color: #2980b9; }
+
+        .log-box {
+            background: #1e1e1e;
+            color: #00ff00;
+            font-family: monospace;
+            padding: 15px;
+            border-radius: 5px;
+            height: 120px;
+            overflow-y: auto;
+            font-size: 13px;
+            margin-top: 15px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+            font-size: 14px;
+        }
+
+        th, td {
+            border: 1px solid #ddd;
+            padding: 10px;
+            text-align: center;
+        }
+
+        th {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        tr:nth-child(even) { background-color: #f2f2f2; }
+
+        .mark-input {
+            width: 50px;
+            text-align: center;
+            padding: 4px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
         }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h1>نظام أجيال الذكي - لوحة التحكم الشاملة V6.5.2</h1>
-    <p class="description">نظام أجيال الذكي - إصلاح زر تغيير الخيار ونسب المطابقة اليدوية وتلوين العناوين باللون الأسود.</p>
-    
-    <div class="status-box">
-        <strong>حالة النظام البرمجي:</strong> <span id="system-status">جاهز للعمل ومستقر وبانتظار البيانات.</span>
+    <div class="header">
+        <h1>🎯 نظام أجيال المستقل لإدارة ورصد العلامات ذكياً</h1>
+        <p>قم برفع ملف الإكسل، وسيقوم النظام بمطابقة الأسماء ورصد العلامات تلقائياً في الجدول بالأسفل دون الحاجة لمواقع خارجية.</p>
     </div>
 
-    <button class="btn" onclick="checkTaqweem()">فحص أعمدة التقويم النشطة</button>
+    <div class="grid">
+        <!-- لوحة التحكم ورفع الملفات -->
+        <div class="card">
+            <h2>1. إدخال البيانات والتحكم</h2>
+            <div class="file-upload" onclick="document.getElementById('excel-file').click()">
+                <p>اضغط هنا لرفع كشف علامات الإكسل (xlsx / xls)</p>
+                <input type="file" id="excel-file" accept=".xlsx, .xls" style="display:none;" onchange="handleExcelUpload(event)">
+            </div>
+            
+            <div style="margin-top: 15px; display: flex; gap: 10px;">
+                <button class="btn" onclick="startSmartAutofill()">⚡ تشغيل الرصد الذكي</button>
+                <button class="btn btn-blue" onclick="clearAllSessionMatches()">🗑️ تنظيف التعديلات المؤقتة</button>
+            </div>
+
+            <div class="log-box" id="log-output">📟 نظام التشغيل جاهز ومستقر بانتظار الملفات...</div>
+        </div>
+
+        <!-- معاينة ملف الإكسل المرفوع -->
+        <div class="card">
+            <h2>2. كشف الإكسل المستورد</h2>
+            <div style="max-height: 250px; overflow-y: auto;">
+                <table id="excel-preview-table">
+                    <thead>
+                        <tr>
+                            <th>الرقم الوطني / الوزاري</th>
+                            <th>اسم الطالب (في الإكسل)</th>
+                            <th>العلامة</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td colspan="3" style="color:#999;">لم يتم رفع أي ملف بعد</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- محاكاة جدول نظام أجيال الوزاري الرئيسي -->
+    <div class="card" style="margin-top:20px;">
+        <h2>3. جدول رصد العلامات الافتراضي (محاكاة لنظام أجيال المحمي)</h2>
+        <p style="font-size:13px; color:#666;">* هذا الجدول يحتوي على معرفات ومسميات تطابق كود صفحة الوزارة المكتوب برمجياً لتأمين بيئة اختبار حقيقية.</p>
+        
+        <table id="ctl00_PlaceHolderMain_gvDynamicStudentsMark">
+            <thead>
+                <tr>
+                    <th>الرقم الوزاري</th>
+                    <th>اسم الطالب في النظام</th>
+                    <th>تقويم 1 (عمود 2)</th>
+                    <th>تقويم 2 (عمود 3)</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- طلاب تجريبيين بأسماء مختلفة قليلاً لإثبات قوة خوارزمية المطابقة اللغوية الخاصة بك -->
+                <tr>
+                    <td>99900101</td>
+                    <td>عبد الرحمن احمد الخطيب <br><small style="color:green;">حاضر</small></td>
+                    <td><input type="text" id="row_0_2_tbMark" name="$$2$tbMark" class="mark-input"></td>
+                    <td><input type="text" id="row_0_3_tbMark" name="$$3$tbMark" class="mark-input"></td>
+                </tr>
+                <tr>
+                    <td>99900102</td>
+                    <td>إيمان اسامه المصري <br><small style="color:green;">حاضر</small></td>
+                    <td><input type="text" id="row_1_2_tbMark" name="$$2$tbMark" class="mark-input"></td>
+                    <td><input type="text" id="row_1_3_tbMark" name="$$3$tbMark" class="mark-input"></td>
+                </tr>
+                <tr>
+                    <td>99900103</td>
+                    <td>ساره محمد العبدالله <br><small style="color:green;">حاضر</small></td>
+                    <td><input type="text" id="row_2_2_tbMark" name="$$2$tbMark" class="mark-input"></td>
+                    <td><input type="text" id="row_2_3_tbMark" name="$$3$tbMark" class="mark-input"></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
 </div>
 
 <script>
     'use strict';
 
-    // دالة محاكاة لتسجيل السجلات في الواجهة بدل الـ Console لو رغبت
+    // ربط سجلات النظام مع شاشة العرض السوداء ومخرجات المتصفح
     window.ajyalLog = function(message) {
         console.log(message);
-        const statusElement = document.getElementById("system-status");
-        if (statusElement) {
-            statusElement.innerText = message;
+        const logBox = document.getElementById("log-output");
+        if (logBox) {
+            logBox.innerHTML += `<br> ${message}`;
+            logBox.scrollTop = logBox.scrollHeight; 
         }
     };
 
-    // المتغيرات العامة وإعدادات التحكم
-    window.appZoom = parseFloat(localStorage.getItem("ajyal_zoom_level")) || 1.0;
+    // المتغيرات العامة وإعدادات التحكم المأخوذة من كودك الأساسي
     window.uploadedExcelData = [];
-    window.smartFillExecutionPlan = [];
-    window.forcedPageNumber = 0;
-    window.isEngineRunning = false;
-    window.isAutopilotEnabled = false;
-    let stopEngineFlag = false;
-    let lastDetectedStatusText = "";
-    window.currentSequentialSlice = [];
-    window.currentActiveMode = "";
-
-    // كائنات الذاكرة المؤقتة الطيارة
     let currentSessionPrintedMatches = {};
-    let currentSessionHandwrittenMatches = {};
-    let currentSessionSequentialMatches = {};
-
-    function clearAllSessionMatches() {
-        currentSessionPrintedMatches = {};
-        currentSessionHandwrittenMatches = {};
-        currentSessionSequentialMatches = {};
-        window.ajyalLog("🗑️ [تنظيف تلقائي]: تم تدمير كافة التعديلات اليدوية السابقة لضمان عدم اختلاط الصفوف.");
-    }
-
-    // إعداد قاعدة بيانات الذاكرة المستقرة (IndexedDB)
-    const DB_NAME = "AjyalExcelDB";
+    const DB_NAME = "AjyalExcelDB_Standalone";
     const DB_VERSION = 1;
     const STORE_NAME = "excelDataStore";
 
-    function initExcelDB() {
-        return new Promise((resolve, reject) => {
-            let request = indexedDB.open(DB_NAME, DB_VERSION);
-            request.onupgradeneeded = function(e) {
-                let db = e.target.result;
-                if (!db.objectStoreNames.contains(STORE_NAME)) {
-                    db.createObjectStore(STORE_NAME, { keyPath: "id" });
-                }
-            };
-            request.onsuccess = function(e) { resolve(e.target.result); };
-            request.onerror = function() { reject("IndexedDB Error"); };
-        });
+    // تفعيل وتأمين دالة تنظيف الذاكرة المؤقتة
+    function clearAllSessionMatches() {
+        currentSessionPrintedMatches = {};
+        window.ajyalLog("🗑️ [تنظيف تلقائي]: تم تدمير كافة التعديلات والمطابقات السابقة.");
     }
 
-    async function saveExcelToPersistentStorage(dataArray) {
-        let db = await initExcelDB();
-        let tx = db.transaction(STORE_NAME, "readwrite");
-        let store = tx.objectStore(STORE_NAME);
-        store.clear();
-        store.add({ id: "current_file", data: dataArray });
-        window.ajyalLog("💾 تم حفظ كشف الإكسل الأساسي في الجهاز بنجاح.");
-    }
-
-    async function loadExcelFromPersistentStorage() {
-        let db = await initExcelDB();
-        return new Promise((resolve) => {
-            let tx = db.transaction(STORE_NAME, "readonly");
-            let store = tx.objectStore(STORE_NAME);
-            let request = store.get("current_file");
-            request.onsuccess = function() {
-                if(request.result) {
-                    window.uploadedExcelData = request.result.data;
-                    window.ajyalLog(`🔄 تم استعادة الكشف الأصلي تلقائياً: ${window.uploadedExcelData.length} طالب.`);
-                    if(typeof window.renderExcelPreviewTable === "function") {
-                        window.renderExcelPreviewTable();
-                    }
-                }
-                resolve();
-            };
-            request.onerror = function() { resolve(); };
-        });
-    }
-
-    // دالة المعايرة اللغوية للأسماء
+    // خوارزمية المعايرة اللغوية الخاصة بك لتوحيد الأسماء العربية
     function normalizeArabicName(name) {
         if (!name) return "";
         let text = String(name).trim();
@@ -166,6 +252,7 @@
         return text;
     }
 
+    // خوارزمية حساب نسبة تشابه النصوص (المطابقة اليدوية الذكية)
     function getStringSimilarity(s1, s2) {
         if (!s1 || !s2) return 0;
         let longer = s1.length > s2.length ? s1 : s2;
@@ -195,71 +282,5 @@
         return costs[s2.length];
     }
 
+    // دالة فحص وتحديد أسطر الطلاب الصالحة في الجدول بناءً على الرقم الوطني
     function getValidStudentRows() {
-        let table = document.getElementById("ctl00_PlaceHolderMain_gvDynamicStudentsMark");
-        if (!table) return [];
-        let trs = table.getElementsByTagName("tr");
-        let validRows = [];
-        for (let i = 0; i < trs.length; i++) {
-            let row = trs[i];
-            if (row.cells && row.cells.length > 3) {
-                let firstCellText = row.cells[0].innerText.trim();
-                if (/^\d{8,12}$/.test(firstCellText)) {
-                    validRows.push(row);
-                }
-            }
-        }
-        return validRows;
-    }
-
-    function getStudentNameFromWebsiteRow(rowIndex) {
-        let rows = getValidStudentRows();
-        let rowElement = rows[rowIndex];
-        if (rowElement) {
-            let cellText = rowElement.cells[1].innerText.trim();
-            let cleanText = cellText.replace(/حاضر/g, "").replace(/غائب/g, "").replace(/إجازة/g, "").trim();
-            return cleanText.split('\n')[0].trim();
-        }
-        return "";
-    }
-
-    function getActualPageRowsCount() {
-        return getValidStudentRows().length;
-    }
-
-    window.checkAndReportOpenTaqweemCols = function() {
-        let rows = getValidStudentRows();
-        if (rows.length === 0) return { list: [], text: "❌ لم يتم العثور على جدول علامات نشط في الصفحة حالياً" };
-
-        let rowElement = rows[0];
-        let inputs = rowElement.getElementsByTagName("input");
-        let openCols = [];
-
-        for (let taqweemCol = 2; taqweemCol <= 5; taqweemCol++) {
-            let foundActive = false;
-            for (let i = 0; i < inputs.length; i++) {
-                let inp = inputs[i];
-                if (inp.type === "text" && !inp.disabled && inp.style.display !== "none") {
-                    if (inp.id.includes(`_${taqweemCol}_tbMark`) || inp.name.includes(`$$${taqweemCol}$tbMark`)) {
-                        foundActive = true;
-                        break;
-                    }
-                }
-            }
-            if (foundActive) {
-                let label = (taqweemCol === 2) ? "تقويم 1" : (taqweemCol === 3) ? "تقويم 2" : (taqweemCol === 4) ? "تقويم 3" : "النهائي";
-                openCols.push({ id: taqweemCol, label: label });
-            }
-        }
-
-        if (openCols.length === 0) {
-            let visibleActiveInputs = Array.from(inputs).filter(inp => inp.type === "text" && !inp.disabled && inp.style.display !== "none");
-            if (visibleActiveInputs.length === 1) {
-                let table = document.getElementById("ctl00_PlaceHolderMain_gvDynamicStudentsMark");
-                let headerText = table ? table.getElementsByTagName("tr")[0].innerText : "";
-
-                if (headerText.includes("نهائي") || headerText.includes("النهائي")) {
-                    openCols.push({ id: 5, label: "النهائي الفردي" });
-                } else if (headerText.includes("الثالث")) {
-                    openCols.push({ id: 4, label: "تقويم 3 الفردي" });
-                } else if (headerText.includes("الثاني")) {
